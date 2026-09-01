@@ -37,8 +37,8 @@ app.get("/api/client/urls", (req, res) => {
   res.json({ webSocketServerUrl: baseUrl, webUrl: baseUrl, apiBaseUrl: baseUrl, contentUrl: baseUrl });
 });
 
-// The app's ICompatibilityService expects these exact field names
 app.get("/api/Client/SupportedVersions", (req, res) => {
+  console.log(`[VERSION] SupportedVersions requested`);
   res.json({
     BridgeMinVersion: "0.0.0",
     BridgeMaxVersion: "99.99.99",
@@ -46,7 +46,12 @@ app.get("/api/Client/SupportedVersions", (req, res) => {
     FreverMaxBuild: "999999",
     FreverMinVersion: "0.0.0",
     FreverMaxVersion: "99.99.99",
-    isCompatibleWithBridge: true
+    IsSupportedWithBridge: true,
+    minVersion: "0.0.0",
+    latestVersion: "99.99.99",
+    isSupported: true,
+    minBuildNumber: 0,
+    requiredVersion: "0.0.0"
   });
 });
 
@@ -103,23 +108,11 @@ app.get("/ai/poll-status/:id", (req, res) => res.json({ status: "completed", res
 app.get("/create-page", (req, res) => res.json({ sections: [] }));
 app.get("/create-page/content", (req, res) => res.json({ content: [] }));
 
-// Reroute endpoint - the app sends protobuf and expects protobuf back
-// For now return a minimal valid protobuf response (empty message)
 app.post("/reroute", (req, res) => {
   logRequest(req, req.body);
   console.log(`\n=== /reroute === Content-Type: ${req.headers["content-type"]}, Body: ${req.body ? req.body.length : 0} bytes`);
-  
-  const contentType = req.headers["content-type"] || "";
-  
-  if (contentType.includes("protobuf") || req.body && req.body.length > 0 && req.body[0] !== 0x7b) {
-    // Protobuf request - return empty protobuf message (just a zero byte)
-    res.setHeader("Content-Type", "application/vnd.google.protobuf");
-    res.status(200).send(Buffer.from([0]));
-  } else {
-    // JSON fallback
-    res.setHeader("Content-Type", "application/json");
-    res.status(200).send(JSON.stringify({ status: "ok" }));
-  }
+  res.setHeader("Content-Type", "application/json");
+  res.status(200).send(JSON.stringify({ status: "ok" }));
 });
 
 app.use((req, res) => {
